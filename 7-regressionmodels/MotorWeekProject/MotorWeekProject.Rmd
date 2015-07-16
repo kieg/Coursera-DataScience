@@ -1,0 +1,144 @@
+---
+title: "Motor Trend Weekly - MTCars Regression Analysis"
+author: "Kie Gouveia"
+output: 
+  pdf_document:
+    fig_width: 5
+    fig_height: 4
+---
+
+## Executive Summary
+The purpose of this report is to concisely explore the relationship between a set of variables and miles per gallon(mpg) using the mtcars dataset. In particular, the report will attempt to address the following:  
+- Is an automatic or manual transmission  better for MPG?  
+- Quantify the mpg difference between automatic and manual transmissions.
+
+```{r, echo = FALSE, message = FALSE}
+data(mtcars)
+library(ggplot2); library(car); library(graphics); library(gclus)
+mtcars$am <- factor(mtcars$am)
+mtcars$cyl <- factor(mtcars$cyl)
+mtcars$vs <- factor(mtcars$vs)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+```
+
+
+Inital exploratory analysis (see Appendix: Exploratory Analysis) revealed that the mean mpg among automatic cars is 17.15 with a standard deviation of 3.83, and 24.39 among manual cars, with a standard deviation of 6.17. 
+
+### Univariate Analysis
+It will be useful to begin this analysis by creating a linear univariate model using automatic/manual (am) as a predictor and mpg as the outcome. This will provide insight into the relationship between these variables and act as a baseline for further multivariate analysis. 
+
+```{r, echo=TRUE}
+fit <- lm(mpg ~ am, data = mtcars)
+summary(fit)$coeff; summary(fit)$r.squared
+
+```
+
+Here, the estimate of am0 (the mean mpg for automatic vehicles) is our intercept and the slope associated with am1(manual) 7.25, is simply the difference in mean mpg between automatic and manual cars. This suggests that on average, the mean mpg among manual cars is 7.25 higher than that of automatic cars. This result is statistically significant using a confidence level of 95%. However, the returned R^2 indicates that this model is only capable of predicting 36% of the variance in mpg, suggesting that the model could be improved by including other variables. 
+
+## Multivariate Analysis
+To revise the model to include other variables which are  significant predictors of mpg, we  will do some simple nested model testing using the anova function.
+
+```{r, eval = FALSE}
+fitAll <- lm(mpg ~ ., data = mtcars)
+anova(fitAll) # not shown. 
+```
+
+According to this analysis, cyl(number of cylinders), disp (displacement(cu.in.)) and wt(weight (lb/1000)) all appear to contain groups with significant levels of variation. Therefore, they could serve as good predictors for mpg. Given that there is a known interaction between automatic and manual transmission and weight, we will also include this in the model. 
+
+After seeing that certain numbers of cylinders did not show statistically significant variance (at 95% confidence), we settle on this model which shows that all figures are statistically significant and returns a much stronger .833 R^2. 
+
+```{r}
+newfit <- lm(mpg ~ am:wt + am + wt, data = mtcars)
+summary(fit)$coeff; 
+summary(fit)$r.squared
+```
+
+```{r, echo = TRUE, eval = FALSE}
+anova(fit, newfit) # not shown.
+```
+
+An anova analysis comparing our multivariate model to our univariate model shows statistically significant p-values, meaning we can reject the hypothesis that our newly added variables do not contribute information around variance in mpg. 
+
+## Diagnostics
+
+```{r, eval = FALSE}
+par(mfrow = c(2,2)); plot(newfit)
+plot(resid(newfit)) # not shown. 
+```
+
+In our residual plot analysis the plots seem fairly healthy. There may be a slight negative pattern in the Residuals vs Fitted Values plot that warrants further exploration. The Q-Q plot appears to show that residuals are relatively normalalthough here, too, there may be a slight trend. 
+
+## Inference
+```{r}
+t.test(mpg ~ am, data = mtcars)$conf.int
+```
+
+Finally, we conduct a t-test with the null hypothesis that there is not significant variation in mpg among automatic and manual cars. The results of this test allow us to say that the likelihood of variation we see in mpg between automatic and manual vehicles would happen in less 5% of cases. Thus, with 95% confidence there is variance in mpg between these transmission types.
+
+
+## Findings and Considerations
+
+According to our most accurate model: 
+- Holding weight constant and disregarding the interaction between weight and am, manual transmission cars will get 14.9 more miles per gallon than automatic cars. 
+- In order to ensure that the coefficients for transmission type were statistically significant, other strong predictors were omitted. In another analysis, it would be worth exploring models including other strong predictor candidates. 
+- The data itself may be skewed by driver skill, which is not accounted for by the dataset. 
+
+## Appendix
+
+_Preparation_
+
+Load data and necessary packages:
+
+```{r, echo = TRUE, eval = FALSE}
+library(ggplot2)
+library(car)
+library(graphics)
+library(gclus)
+data(mtcars)
+mtcars$am <- factor(mtcars$am)
+```
+
+### Exploratory Analysis
+
+Data Summary:
+
+```{r, echo = FALSE, eval = TRUE}
+
+summary(mtcars)
+round(mean(mtcars$mpg[mtcars$am == 0]), 2)
+round(mean(mtcars$mpg[mtcars$am == 1]), 2)
+round(sd(mtcars$mpg[mtcars$am == 0]), 2)
+round(sd(mtcars$mpg[mtcars$am == 1]), 2)
+
+```
+
+Exploratory Graphs: 
+
+```{r, echo = FALSE, eval = TRUE}
+
+
+g <- ggplot(mtcars, aes(x = am, y = mpg))
+g <- g + geom_boxplot() + 
+  scale_x_discrete(breaks=c(0,1), labels=c("Automatic", "Manual")) +
+  xlab("Automatic/Manual") +
+  ylab("Miles Per Gallon (mpg)") + 
+  ggtitle("Miles Per Gallon by Transmission Type")
+g
+
+```
+
+```{r, echo = FALSE, eval = TRUE}
+
+# Scatterplot Matrices
+pairs(~.,data=mtcars,
+   main="Scatterplot Correlation Matrix")
+
+``` 
+
+
+### Diagnostics
+
+```{r}
+par(mfrow = c(2,2)); plot(newfit)
+```

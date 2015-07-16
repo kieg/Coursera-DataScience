@@ -1,0 +1,100 @@
+## Coursera - Getting and Cleaning Data Course Project
+### Kie Gouveia
+#### Saturday, May 23, 2015
+
+
+#### Purpose and Description of Project
+
+The purpose of this project is to demonstrate your ability to collect, work with, and clean a data set. The goal is to prepare tidy data that can be used for later analysis. You will be graded by your peers on a series of yes/no questions related to the project. You will be required to submit: 1. A tidy data set as described below
+2. A link to a Github repository with your script for performing the analysis
+3. A code book that describes the variables, the data, and any transformations or work that you performed to clean up the data called CodeBook.md. 
+4. You should also include a README.md in the repo with your scripts. This repo explains how all of the scripts work and how they are connected. 
+
+One of the most exciting areas in all of data science right now is wearable computing - see for example this article . Companies like Fitbit, Nike, and Jawbone Up are racing to develop the most advanced algorithms to attract new users. The data linked to from the course website represent data collected from the accelerometers from the Samsung Galaxy S smartphone. A full description is available at the site where the data was obtained:
+
+http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones
+
+Here are the data for the project:
+
+https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip
+
+You should create one R script called run_analysis.R that does the following. 
+
+1. Merges the training and the test sets to create one data set.
+2. Extracts only the measurements on the mean and standard deviation for each measurement. 
+3. Uses descriptive activity names to name the activities in the data set
+4. Appropriately labels the data set with descriptive variable names. 
+5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
+
+
+### Description of Raw Data
+
+The data used for this project come from the 'Human Activity Recognition Using Smartphones Dataset' and represent data collected from accelerometers from the Samsung Galaxy S Smartphone. A full description is available here:
+
+[http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones ](http://archive.ics.uci.edu/ml/daasets/Human+Activity+Recognition+Using+Smartphones)
+
+The original data was created in the following way: "experiments have been carried out with a group of 30 volunteers within an age bracket of 19-48 years. Each person performed six activities (WALKING, WALKING_UPSTAIRS, WALKING_DOWNSTAIRS, SITTING, STANDING, LAYING) wearing a smartphone (Samsung Galaxy S II) on the waist. Using its embedded accelerometer and gyroscope, we captured 3-axial linear acceleration and 3-axial angular velocity at a constant rate of 50Hz. The experiments have been video-recorded to label the data manually. The obtained dataset has been randomly partitioned into two sets, where 70% of the volunteers was selected for generating the training data and 30% the test data."
+
+The original data may be found here:
+
+[https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip](https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip)
+
+### Data Transformation 
+
+This dataset was created by merging the training and test datasets, as well as labels, from the UCI HAR dataset, filtering for measures of mean and standard deviation, calculating the average of all measures according to subject and activity, then renaming variables for clarity. 
+
+A full description of these steps is provided in the methodology section.
+
+For each record it is provided:  
+1. An identifier of the subject who carried out the experiement.   
+2.  Its activity label.  
+3.  An 88 feature vector with average time and frequency domain variables.  
+4.  Triaxial Angular velocity from the gyroscope.  
+5.  Triaxial acceleration from the accelerometer(total acceleration) and the estimated body acceleration.   
+
+The dataset includes the following files:
+
+- 'README.html'
+- 'CodeBook.html': providing in-depth information about the dataset and individual variables. 
+- 'run_analysis.R': script to clean the raw dataset and produce the tidy 'getCleanProject.txt' file
+- 'tidyData.txt': output from run_analysis.R when used on the UCI HAR Dataset. 
+
+### Methodology:
+
+The following steps were taken to obtain, clean and output the tidy dataset 'getCleanProject.txt':
+
+1. Data was downloaded using download.file()
+2. Data was unzipped using unzip() and placed into the working directory. 
+3. Plyr and dplyr packages were loaded, installing if necessary. 
+4. The following files were read in using read.table() and optimized using tbl_df() function from dplyr package.
+  - 'features.txt'
+  - 'activity_labels.txt'
+  - Training sets and labels including: 'X-train.txt', y-train.txt', 'subject_train.txt'
+  - Test sets and labels including: 'X-test.txt', y-test.txt', 'subject_test.txt'
+5. Subject information and activity labels were attached to training and test sets using cbind().
+6. Training set and test set were combined using rbind (satisfying requirement 1)
+7. subject.id, activity and all columns pertaining to mean and standard deviation (which I defined to include any variables containing mean, Mean or std) were extracted using grep() command. (satisyfing requirement 2)
+8. Clear column names were assigned to replace ambiguous v1, v2 etc, names using colnames() and grep() (satisfying requirement 4)
+9. Activities were renamed to be more descriptive using a simple 'for loop' and referring to the 'activities.txt' file (satisfying requirement 3)
+10. Using dplyr's group_by() function, dataset was grouped first by subject, then by activity.
+11. Using dplyr's summarise_each() function, for each subject, the average value was calculated for each variable, then grouped by activity (satisfying requirement 5). Note, this results in a tall dataset which is appropriate for this problem)
+12. Finally, variables were  to ensure that they adequately communicate that each value is now an average. (Further satisyfing requirement 4) 
+
+## Notes: 
+- Assuming that the 'UCI HAR Dataset' folder is in the working directory, the run_analysis.R script will produce a tidy version of the dataset, as specified in the project requirements, titled 'getCleanProject.txt'
+- to view 'tidyData.txt' you may run the following script in R, assuming that the file is in your working directory:
+
+```{r}
+
+tidyData <- read.table("tidyData.txt", header = TRUE)
+
+```
+
+## Original Citations
+
+Jorge L. Reyes-Ortiz(1,2), Davide Anguita(1), Alessandro Ghio(1), Luca Oneto(1) and Xavier Parra(2)
+1 - Smartlab - Non-Linear Complex Systems Laboratory
+DITEN - Università  degli Studi di Genova, Genoa (I-16145), Italy. 
+2 - CETpD - Technical Research Centre for Dependency Care and Autonomous Living
+Universitat Politècnica de Catalunya (BarcelonaTech). Vilanova i la Geltrú (08800), Spain
+activityrecognition '@' smartlab.ws 
