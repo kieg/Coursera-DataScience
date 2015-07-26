@@ -1,0 +1,159 @@
+---
+title: "Machine Learning - Course Project"
+author: "Kie Gouveia"
+date: "July 23, 2015"
+output: html_document
+---
+
+## Environment Set-Up
+
+### Download Data
+
+```{r}
+fileUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+fileUrl2 <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+
+if(!file.exists("./pml-training.csv")){
+  download.file(fileUrl, "./pml-training.csv")
+}
+
+if(!file.exists("./pml-testing.csv")){
+  download.file(fileUrl2, "./pml-testing.csv")
+}
+```
+
+### Set Seed for Reproducibility
+
+```{r}
+set.seed(0012)
+```
+
+
+### Load the training and test set. 
+
+```{r}
+train0 <- read.csv("pml-training.csv", header = TRUE)
+test0 <- read.csv("pml-testing.csv", header = TRUE)
+```
+
+
+### Load necessary packages
+
+```{r, echo=FALSE}
+library(caret)
+library(rpart.plot)
+```
+
+
+
+## Data Preparation
+
+### Data Cleaning and Variable Reduction
+
+A few steps are taken to eliminate variables which contain significant amounts of missing data and to reduce the number of variables to only those which provide adequate new information. This helps with computational efficiency and overfitting. 
+
+1. Eliminate all variables where more than 50% of the data is NA.
+2. Subset only numerical variables.
+3. Reattach the classe variable to be predicted. 
+
+```{r}
+classe <- train0$classe
+train <- train0[, colSums(is.na(train0)) < nrow(train0) * 0.5] # eliminate all variables which are more the 50% NA
+train <- train[ , lapply(train, is.numeric) == TRUE]
+train <- cbind(train, classe)
+```
+
+Note: I opted to remove non numeric variables such as the name of the participant. Although this may have improved the accuracy of teh model for the purposes of this project, it would not translate well to real-world application where the algorithm would be used on new participants. 
+
+## Experimental Design
+
+Sampling is used to assign 60% of dataset to a training set and 40% to a test set. 
+
+```{r}
+inTrain <- createDataPartition(y = train$classe,
+                              p = 0.6,
+                              list = FALSE)
+
+trainSamp <- train[inTrain, ]
+testSamp  <- train[-inTrain, ]
+
+```
+
+
+## Analysis
+
+A number of models were tested during the course of the assignment, including simple decision trees and gradient boosted models. The model which produced the best results during cross-validation was a Random Forest model which yielded an accuracy of NUMBER.
+
+
+### Random Forest
+
+The model was preprocessed using Principle Components Analysis to remove variables which added little new information to the model (this also helped to ease computation time). 
+
+The model was trained on only  the training data set. 
+
+```{r}
+
+fitControl <- trainControl(## 10-fold CV
+                           method = "repeatedcv",
+                           number = 10,
+                           ## repeated ten times
+                           repeats = 10)
+
+rfFit1 <- train(classe ~ .,
+                data = trainSamp,
+                trControl = fitControl,
+                preProcess = c("pca"),
+                method = "rf") 
+
+print(rfFit1)
+      
+```
+
+
+### Cross Validation
+
+To cross validate the data, we can run the final model on the testSamp dataset which we omitted while training the data. 
+
+```{r}
+
+rfPred <- predict(rfFit1, newdata = testSamp)
+
+confusionMatrix(data = rfPred, testSamp$classe)
+
+```
+
+Based upon this cross validation, we expect the out of sample error to be 'r 1 - rfFit1$results$Accuracy':
+
+
+## Prediction
+
+Finally, I run the fest model on the test dataset which was provided for the assignment and assign it to variable answers. 
+
+Running best model, Random Forest, on test data
+
+```{r}
+answers <- predict(rfFit1, newdata = test0)
+```
+
+
+Submission 
+
+```{r}
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+pml_write_files(answers)
+```
+
+Save Model for later use:
+
+```{r}
+saveRDS(rfFit1, file = "rfFit1.rds")
+# rfFit1 = readRDS("rfFit1.rds")
+```
