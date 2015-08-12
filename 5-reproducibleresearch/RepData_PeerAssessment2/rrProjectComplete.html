@@ -74,7 +74,7 @@ img {
 </ol>
 <p>The data is originally taken from the National Weather Service who collects the information from sources which include, but are not limited to: county, state and federal emergency management officials, local law enforcement officials, National Weather Service damage surveys, and the general public.</p>
 <p>For more detailed information, refer to:</p>
-<p><a href="https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf">Storm Data DOcumentation</a></p>
+<p><a href="https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf">Storm Data Documentation</a></p>
 <p><a href="https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf">FAQ</a></p>
 <p>This report will attempt to illuminate current trends by narrowing the scope of analysis to a timeframe of twenty years, spanning from 1991 - 2011 (the most recent year of published data in the dataset).</p>
 <p>The findings suggest that tornados, excessive heat and flooding were the most harmful to human health during this period, while flooding hurricanes and storm surges caused the most monetary damage to property and crops.</p>
@@ -88,7 +88,8 @@ img {
 </div>
 <div id="reading-in-the-data" class="section level3">
 <h3>Reading in the data</h3>
-<pre class="r"><code>storm &lt;- read.csv(bzfile(&quot;repdata_data_StormData.csv.bz2&quot;), stringsAsFactors = FALSE) # bz command extracts the bz file. 
+<pre class="r"><code>storm &lt;- read.csv(bzfile(&quot;repdata_data_StormData.csv.bz2&quot;), stringsAsFactors = FALSE) 
+# bz command extracts the bz file. 
 
 # Load necesary packages.
 library(dplyr)
@@ -131,25 +132,34 @@ firstElement &lt;- function(x){x[1]}
 splitDates &lt;- sapply(splitDates, firstElement)
 stormFilt$Date &lt;- splitDates</code></pre>
 <p>It is now possible to isolate just entries from 1991 until 2011.</p>
-<pre class="r"><code>stormFilt &lt;- stormFilt[stormFilt$Date &gt;= 1991,] # we will observe 20 years of data (1991 - 2011). This will show recent trends and make use of more complete data. </code></pre>
+<pre class="r"><code>stormFilt &lt;- stormFilt[stormFilt$Date &gt;= 1991,] 
+# we will observe 20 years of data (1991 - 2011). This will show recent trends and make 
+#use of more complete data. </code></pre>
 </div>
 <div id="ensuring-clean-consistent-events-types" class="section level3">
 <h3>Ensuring clean, consistent events types</h3>
 <p>At this point in the cleaning process, there are 471 unique EVTYPEs listed in the dataset. The original documentation list only 48. This difference is due to miscoding, misspelling, and coding multiple EVTYPEs in one entry and other input anomalies. To ensure an accurate analysis, it is critical to consolidate these EVTYPES to ensure that discrete categories are representative and meaningful.</p>
 <p>The analysis below does the following: - converts all text to lower case - removes digits and symbols for simplicity - corrects common spelling errors - codes each EVTYPE as only a single event.</p>
-<p>In cases where multiple EVTYPEs are listed, they were recoded to the event which was more likely to have caused human injury and monetary damage. In some cases, event types were consolidated when they were similar enough for the purposes of this report.</p>
-<pre class="r"><code>stormFilt$EVTYPE &lt;- tolower(stormFilt$EVTYPE) # convert all text to lower case. 
+<p>In cases where multiple EVTYPEs are listed, they were recoded to the event which was more likely to have caused human injury and monetary damage. In some cases, event types were consolidated when they were similar enough for the purposes of this report. This parsing is quite verbose- please consult Appendix A to view full details.</p>
+<pre class="r"><code>stormFilt$EVTYPE &lt;- tolower(stormFilt$EVTYPE) 
+# convert all text to lower case. 
 
-stormFilt$EVTYPE &lt;- gsub(&quot;//d&quot;, &quot;&quot;, stormFilt$EVTYPE) # remove digits
-stormFilt$EVTYPE &lt;- gsub(&quot;/^[a-z ]&quot;, &quot;&quot;, stormFilt$EVTYPE) # removes anything that is not a letter or space.
-stormFilt$EVTYPE &lt;- gsub(&quot;?&quot;, &quot;&quot;, stormFilt$EVTYPE) # removes '?'
+stormFilt$EVTYPE &lt;- gsub(&quot;//d&quot;, &quot;&quot;, stormFilt$EVTYPE) 
+# remove digits
+stormFilt$EVTYPE &lt;- gsub(&quot;/^[a-z ]&quot;, &quot;&quot;, stormFilt$EVTYPE) 
+# removes anything that is not a letter or space.
+
+stormFilt$EVTYPE &lt;- gsub(&quot;?&quot;, &quot;&quot;, stormFilt$EVTYPE) 
+# removes '?'
 stormFilt$EVTYPE &lt;- gsub(&quot;other&quot;, &quot;&quot;, stormFilt$EVTYPE) # removes 'other'
 stormFilt$EVTYPE &lt;- gsub(&quot;apache county&quot;, &quot;&quot;, stormFilt$EVTYPE) # remove 'apache county'
 
-# the following commands seek out particular events which are explained the original documentation, then
-# renames the event so that no extraneous text remains. In this way some multiple events are reduced
-# to a single event. For example, 'blizzard/snow' is reduced to 'blizzard' (the component which was likely
-# to have caused harm and damage).
+# the following commands seek out particular events which are
+# explained the original documentation, then renames the event so
+# that no extraneous text remains. In this way some multiple
+# events are reduced to a single event. For example, 
+# blizzard/snow' is reduced to 'blizzard' (the component 
+# which was likely to have caused harm and damage).
 stormFilt$EVTYPE &lt;- gsub(&quot;.*(astronomical).*&quot;, &quot;astronomical low tide&quot;, stormFilt$EVTYPE)
 stormFilt$EVTYPE &lt;- gsub(&quot;.*(avalanche).*&quot;, &quot;avalanche&quot;, stormFilt$EVTYPE) 
 stormFilt$EVTYPE &lt;- gsub(&quot;.*(blizzard).*&quot;, &quot;blizzard&quot;, stormFilt$EVTYPE)
@@ -268,7 +278,8 @@ g + theme(axis.text.x =
 <div id="question-2---economic-consequences" class="section level3">
 <h3>Question 2 - Economic Consequences</h3>
 <p>Across the United States, which types of events have the greatest economic consequences?</p>
-<pre class="r"><code># manipulating the dataframe to show total dollar cost cost by EVTYPE, arranged in descending order. 
+<pre class="r"><code># manipulating the dataframe to show total dollar cost cost by EVTYPE, arranged in 
+# descending order. 
 
 dollarImpact &lt;- stormFilt %&gt;%
   group_by(EVTYPE) %&gt;%

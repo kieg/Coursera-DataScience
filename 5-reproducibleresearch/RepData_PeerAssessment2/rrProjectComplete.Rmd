@@ -17,7 +17,7 @@ The data is originally taken from the National Weather Service who collects the 
 
 For more detailed information, refer to:
 
-[Storm Data DOcumentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf)
+[Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf)
 
 [FAQ](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)
 
@@ -35,8 +35,8 @@ The following link houses a copy of the NOAA storm data set which is used throug
 
 ### Reading in the data
 ```{r, cache = TRUE, message = FALSE}
-storm <- read.csv(bzfile("repdata_data_StormData.csv.bz2"), stringsAsFactors = FALSE) 
-# bz command extracts the bz file. 
+storm <- read.csv("repdata_data_StormData.csv", stringsAsFactors = FALSE) 
+
 
 # Load necesary packages.
 library(dplyr)
@@ -62,7 +62,7 @@ We are interested in the human and economics costs associated with the weather e
 
 Therefore, we will remove all instances where no human or economic impacts are recorded.
 
-```{r, message = FALSE}
+```{r}
 stormFilt <- storm %>%
   filter(FATALITIES != 0 | 
            INJURIES != 0 | 
@@ -98,7 +98,8 @@ It is now possible to isolate just entries from 1991 until 2011.
 
 ```{r, message = FALSE}
 stormFilt <- stormFilt[stormFilt$Date >= 1991,] 
-# we will observe 20 years of data (1991 - 2011). This will show recent trends and make use of more complete data. 
+# we will observe 20 years of data (1991 - 2011). This will show recent trends and make 
+#use of more complete data. 
 
 ```
 
@@ -114,9 +115,9 @@ The analysis below does the following:
 - codes each EVTYPE as only a single event. 
 
 In cases where multiple EVTYPEs are listed,
-they were recoded to the event which was more likely to have caused human injury and monetary damage. In some cases, event types were consolidated when they were similar enough for the purposes of this report. 
+they were recoded to the event which was more likely to have caused human injury and monetary damage. In some cases, event types were consolidated when they were similar enough for the purposes of this report. This parsing is quite verbose- please consult Appendix A to view full details. 
 
-```{r, message = FALSE}
+```{r, message = FALSE, echo = FALSE, evaluate = TRUE}
 stormFilt$EVTYPE <- tolower(stormFilt$EVTYPE) 
 # convert all text to lower case. 
 
@@ -130,13 +131,12 @@ stormFilt$EVTYPE <- gsub("?", "", stormFilt$EVTYPE)
 stormFilt$EVTYPE <- gsub("other", "", stormFilt$EVTYPE) # removes 'other'
 stormFilt$EVTYPE <- gsub("apache county", "", stormFilt$EVTYPE) # remove 'apache county'
 
-# the following commands seek out particular events 
-# which are explained the original documentation, 
-# then renames the event so that no extraneous text 
-# remains. In this way some multiple events are reduced
-# to a single event. For example, 'blizzard/snow' is
-# reduced to 'blizzard' (the component which was likely
-# to have caused harm and damage).
+# the following commands seek out particular events which are
+# explained the original documentation, then renames the event so
+# that no extraneous text remains. In this way some multiple
+# events are reduced to a single event. For example, 
+# blizzard/snow' is reduced to 'blizzard' (the component 
+# which was likely to have caused harm and damage).
 stormFilt$EVTYPE <- gsub(".*(astronomical).*", "astronomical low tide", stormFilt$EVTYPE)
 stormFilt$EVTYPE <- gsub(".*(avalanche).*", "avalanche", stormFilt$EVTYPE) 
 stormFilt$EVTYPE <- gsub(".*(blizzard).*", "blizzard", stormFilt$EVTYPE)
@@ -310,3 +310,69 @@ g + theme(axis.text.x =
 With respect to monetary damage to property, it appears that flooding causes the most extensive damage to property and crops, trailed by hurricanes and storm surges (which also amounts to flooding). 
 
 Understanding the monetary costs associated with such disasters can provide a guideline for the amount of national budgets which can and should be allocated to mitigating the effects of such events.
+
+## Appendix A  
+
+```{r, message = FALSE, echo = TRUE, evaluate = FALSE}
+stormFilt$EVTYPE <- tolower(stormFilt$EVTYPE) 
+# convert all text to lower case. 
+
+stormFilt$EVTYPE <- gsub("//d", "", stormFilt$EVTYPE) 
+# remove digits
+stormFilt$EVTYPE <- gsub("/^[a-z ]", "", stormFilt$EVTYPE) 
+# removes anything that is not a letter or space.
+
+stormFilt$EVTYPE <- gsub("?", "", stormFilt$EVTYPE) 
+# removes '?'
+stormFilt$EVTYPE <- gsub("other", "", stormFilt$EVTYPE) # removes 'other'
+stormFilt$EVTYPE <- gsub("apache county", "", stormFilt$EVTYPE) # remove 'apache county'
+
+# the following commands seek out particular events which are
+# explained the original documentation, then renames the event so
+# that no extraneous text remains. In this way some multiple
+# events are reduced to a single event. For example, 
+# blizzard/snow' is reduced to 'blizzard' (the component 
+# which was likely to have caused harm and damage).
+stormFilt$EVTYPE <- gsub(".*(astronomical).*", "astronomical low tide", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(avalanche).*", "avalanche", stormFilt$EVTYPE) 
+stormFilt$EVTYPE <- gsub(".*(blizzard).*", "blizzard", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(coastal).*", "coastal flood", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(cold/wind).*", "cold/wind chill", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(cold/wind).*", "cold/wind chill", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(fog).*", "fog", stormFilt$EVTYPE)
+
+stormFilt$EVTYPE <- gsub(".*(heat).*", "excessive heat", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(hyperthermia).*", "extreme heat", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(fire).*", "wildfire", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(cold).*", "extreme cold", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(frost).*", "extreme cold", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(winter).*", "extreme cold", stormFilt$EVTYPE)
+
+stormFilt$EVTYPE <- gsub(".*(flash flood).*", "flash flood", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(flood).*", "flood", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(fld).*", "flood", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(freez).*", "ice", stormFilt$EVTYPE)
+
+stormFilt$EVTYPE <- gsub(".*(landslide).*", "landslide", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(hail).*", "hail", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(ice).*", "ice", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(icy).*", "ice", stormFilt$EVTYPE)
+
+stormFilt$EVTYPE <- gsub(".*(hurricane).*", "hurricane", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(tropical storm).*", "tropical storm", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(storm surge).*", "storm surge", stormFilt$EVTYPE)
+
+stormFilt$EVTYPE <- gsub(".*(rain).*", "heavy rain", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(wind).*", "wind", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(snow).*", "snow", stormFilt$EVTYPE)
+
+stormFilt$EVTYPE <- gsub(".*(lightning).*", "lightning", stormFilt$EVTYPE)
+
+stormFilt$EVTYPE <- gsub(".*(thunderstorm).*", "thunderstorm wind", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(tstm).*", "thunderstorm wind", stormFilt$EVTYPE)
+
+stormFilt$EVTYPE <- gsub(".*(tornado).*", "tornado", stormFilt$EVTYPE)
+stormFilt$EVTYPE <- gsub(".*(torndao).*", "tornado", stormFilt$EVTYPE)
+
+stormFilt$EVTYPE <- str_trim(stormFilt$EVTYPE) # remove trailing and leading spaces
+```
