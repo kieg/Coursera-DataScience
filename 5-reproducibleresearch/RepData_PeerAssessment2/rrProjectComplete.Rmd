@@ -1,6 +1,6 @@
 ---
-title: Impacts of Environmental Events from 1991 to 2011
-output: html_document
+title: "Impacts of Environmental Events from 1991 to 2011"
+output: pdf_document
 ---
 
 ## Synopsis
@@ -35,7 +35,8 @@ The following link houses a copy of the NOAA storm data set which is used throug
 
 ### Reading in the data
 ```{r, cache = TRUE, message = FALSE}
-storm <- read.csv(bzfile("repdata_data_StormData.csv.bz2"), stringsAsFactors = FALSE) # bz command extracts the bz file. 
+storm <- read.csv(bzfile("repdata_data_StormData.csv.bz2"), stringsAsFactors = FALSE) 
+# bz command extracts the bz file. 
 
 # Load necesary packages.
 library(dplyr)
@@ -96,7 +97,8 @@ stormFilt$Date <- splitDates
 It is now possible to isolate just entries from 1991 until 2011. 
 
 ```{r, message = FALSE}
-stormFilt <- stormFilt[stormFilt$Date >= 1991,] # we will observe 20 years of data (1991 - 2011). This will show recent trends and make use of more complete data. 
+stormFilt <- stormFilt[stormFilt$Date >= 1991,] 
+# we will observe 20 years of data (1991 - 2011). This will show recent trends and make use of more complete data. 
 
 ```
 
@@ -115,17 +117,25 @@ In cases where multiple EVTYPEs are listed,
 they were recoded to the event which was more likely to have caused human injury and monetary damage. In some cases, event types were consolidated when they were similar enough for the purposes of this report. 
 
 ```{r, message = FALSE}
-stormFilt$EVTYPE <- tolower(stormFilt$EVTYPE) # convert all text to lower case. 
+stormFilt$EVTYPE <- tolower(stormFilt$EVTYPE) 
+# convert all text to lower case. 
 
-stormFilt$EVTYPE <- gsub("//d", "", stormFilt$EVTYPE) # remove digits
-stormFilt$EVTYPE <- gsub("/^[a-z ]", "", stormFilt$EVTYPE) # removes anything that is not a letter or space.
-stormFilt$EVTYPE <- gsub("?", "", stormFilt$EVTYPE) # removes '?'
+stormFilt$EVTYPE <- gsub("//d", "", stormFilt$EVTYPE) 
+# remove digits
+stormFilt$EVTYPE <- gsub("/^[a-z ]", "", stormFilt$EVTYPE) 
+# removes anything that is not a letter or space.
+
+stormFilt$EVTYPE <- gsub("?", "", stormFilt$EVTYPE) 
+# removes '?'
 stormFilt$EVTYPE <- gsub("other", "", stormFilt$EVTYPE) # removes 'other'
 stormFilt$EVTYPE <- gsub("apache county", "", stormFilt$EVTYPE) # remove 'apache county'
 
-# the following commands seek out particular events which are explained the original documentation, then
-# renames the event so that no extraneous text remains. In this way some multiple events are reduced
-# to a single event. For example, 'blizzard/snow' is reduced to 'blizzard' (the component which was likely
+# the following commands seek out particular events 
+# which are explained the original documentation, 
+# then renames the event so that no extraneous text 
+# remains. In this way some multiple events are reduced
+# to a single event. For example, 'blizzard/snow' is
+# reduced to 'blizzard' (the component which was likely
 # to have caused harm and damage).
 stormFilt$EVTYPE <- gsub(".*(astronomical).*", "astronomical low tide", stormFilt$EVTYPE)
 stormFilt$EVTYPE <- gsub(".*(avalanche).*", "avalanche", stormFilt$EVTYPE) 
@@ -265,7 +275,8 @@ Across the United States, which types of events have the greatest economic conse
 
 ```{r, message = FALSE}
 
-# manipulating the dataframe to show total dollar cost cost by EVTYPE, arranged in descending order. 
+# manipulating the dataframe to show total dollar cost cost by EVTYPE, arranged in 
+# descending order. 
 
 dollarImpact <- stormFilt %>%
   group_by(EVTYPE) %>%
